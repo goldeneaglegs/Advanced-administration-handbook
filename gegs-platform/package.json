@@ -20,7 +20,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:generate": "prisma generate",
-    "gate": "npm run lint && npm run format:check && npm run typecheck && npm run tokens:check && npm run tokens:discipline && npm run i18n:report && npm run contrast:check && npm run test:unit && npm run secret:scan",
+    "gate": "npm run lint && npm run format:check && npm run typecheck && npm run tokens:check && npm run tokens:discipline && npm run i18n:report && npm run i18n:literals && npm run contrast:check && npm run test:unit && npm run secret:scan",
     "test": "vitest run",
     "contrast:check": "node scripts/check-contrast.mjs",
     "tokens:generate": "node scripts/generate-css-tokens.ts",

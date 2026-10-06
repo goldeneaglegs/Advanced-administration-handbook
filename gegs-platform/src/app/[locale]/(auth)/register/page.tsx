@@ -1,6 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { PASSWORD_MIN_LENGTH } from '@/lib/auth/params';
+import { useTranslation } from '@/i18n/useTranslation';
 import { Field } from '../_lib/Field';
 import { StatusRegion } from '../_lib/StatusRegion';
 import { postAuth } from '../_lib/client';
@@ -14,6 +16,7 @@ import { postAuth } from '../_lib/client';
  * person is job-seeking.
  */
 export default function RegisterPage() {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -29,15 +32,19 @@ export default function RegisterPage() {
     setError('');
     setFields({});
 
-    const result = await postAuth('/api/auth/register', {
-      full_name: name.current?.value.trim() ?? '',
-      email: email.current?.value.trim() ?? '',
-      password: password.current?.value ?? '',
-    });
+    const result = await postAuth(
+      '/api/auth/register',
+      {
+        full_name: name.current?.value.trim() ?? '',
+        email: email.current?.value.trim() ?? '',
+        password: password.current?.value ?? '',
+      },
+      t,
+    );
 
     setBusy(false);
     if (result.ok) {
-      setSuccess(result.message || 'Check your email to continue.');
+      setSuccess(result.message || t('register.success'));
       return;
     }
     setError(result.message);
@@ -50,14 +57,14 @@ export default function RegisterPage() {
 
   return (
     <div className="page page--narrow">
-      <h1>Create your account</h1>
+      <h1>{t('register.title')}</h1>
       <StatusRegion error={error} success={success} />
 
       {success ? null : (
         <form className="form" onSubmit={onSubmit} noValidate aria-busy={busy}>
           <Field
             id="full_name"
-            label="Full name"
+            label={t('field.fullName.label')}
             autoComplete="name"
             error={fields.full_name}
             disabled={busy}
@@ -65,7 +72,7 @@ export default function RegisterPage() {
           />
           <Field
             id="email"
-            label="Email address"
+            label={t('field.email.label')}
             type="email"
             autoComplete="email"
             inputMode="email"
@@ -75,16 +82,16 @@ export default function RegisterPage() {
           />
           <Field
             id="password"
-            label="Password"
+            label={t('field.password.label')}
             type="password"
             autoComplete="new-password"
             error={fields.password}
             disabled={busy}
             inputRef={password}
           />
-          <p className="hint">Use at least 12 characters.</p>
+          <p className="hint">{t('validation.password.minLength', { min: PASSWORD_MIN_LENGTH })}</p>
           <button className="btn btn--primary" type="submit" disabled={busy}>
-            {busy ? 'Creating your account…' : 'Create account'}
+            {busy ? t('register.submit.busy') : t('register.submit')}
           </button>
         </form>
       )}

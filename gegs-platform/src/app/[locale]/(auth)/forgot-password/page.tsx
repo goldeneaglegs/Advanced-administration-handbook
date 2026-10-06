@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useTranslation } from '@/i18n/useTranslation';
 import { Field } from '../_lib/Field';
 import { StatusRegion } from '../_lib/StatusRegion';
 import { postAuth } from '../_lib/client';
@@ -13,6 +14,7 @@ import { postAuth } from '../_lib/client';
  * the address exists.
  */
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -24,13 +26,17 @@ export default function ForgotPasswordPage() {
     setBusy(true);
     setError('');
 
-    const result = await postAuth('/api/auth/forgot-password', {
-      email: email.current?.value.trim() ?? '',
-    });
+    const result = await postAuth(
+      '/api/auth/forgot-password',
+      {
+        email: email.current?.value.trim() ?? '',
+      },
+      t,
+    );
 
     setBusy(false);
     if (result.ok) {
-      setSuccess(result.message || 'If that address has an account, a reset link is on its way.');
+      setSuccess(result.message || t('forgotPassword.success'));
       return;
     }
     setError(result.message);
@@ -39,14 +45,14 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="page page--narrow">
-      <h1>Reset your password</h1>
+      <h1>{t('forgotPassword.title')}</h1>
       <StatusRegion error={error} success={success} />
 
       {success ? null : (
         <form className="form" onSubmit={onSubmit} noValidate aria-busy={busy}>
           <Field
             id="email"
-            label="Email address"
+            label={t('field.email.label')}
             type="email"
             autoComplete="email"
             inputMode="email"
@@ -54,7 +60,7 @@ export default function ForgotPasswordPage() {
             inputRef={email}
           />
           <button className="btn btn--primary" type="submit" disabled={busy}>
-            {busy ? 'Sending…' : 'Send reset link'}
+            {busy ? t('forgotPassword.submit.busy') : t('forgotPassword.submit')}
           </button>
         </form>
       )}

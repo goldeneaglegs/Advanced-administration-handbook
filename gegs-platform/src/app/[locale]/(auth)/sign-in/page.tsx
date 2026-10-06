@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/i18n/useTranslation';
 
 /**
  * Sign in.
@@ -26,6 +27,7 @@ function readCsrfCookie(): string {
 }
 
 export default function SignInPage() {
+  const { locale, t } = useTranslation();
   const router = useRouter();
   const [status, setStatus] = useState<Status>('idle');
   const [formError, setFormError] = useState('');
@@ -45,9 +47,8 @@ export default function SignInPage() {
     // Client-side checks are a courtesy only; the server re-validates and is
     // authoritative. On failure, focus moves to the first invalid field.
     const next: Record<string, string> = {};
-    if (email.length === 0) next.email = 'Enter your email address.';
-    // secret-scan-allow: a validation message for an empty field, not a credential.
-    if (password.length === 0) next.password = 'Enter your password.';
+    if (email.length === 0) next.email = t('validation.email.required');
+    if (password.length === 0) next.password = t('validation.password.required');
     if (Object.keys(next).length > 0) {
       setFieldErrors(next);
       setFormError('');
@@ -70,7 +71,9 @@ export default function SignInPage() {
       if (response.ok) {
         // Phase 2 rule 7: success is shown only after the server confirmed it.
         setStatus('succeeded');
-        router.push('/');
+        // The locale the user is reading in, not the stored preference: an
+        // explicit locale stays authoritative (Milestone 4 batch 2a decision).
+        router.push(`/${locale}`);
         return;
       }
 
@@ -81,14 +84,14 @@ export default function SignInPage() {
           : null;
 
       setFieldErrors(error?.fields ?? {});
-      setFormError(error?.message ?? 'Something went wrong. Try again.');
+      setFormError(error?.message ?? t('error.unexpected'));
       setStatus('failed');
       // Send focus where the problem is: a named field, or the summary.
       if (error?.fields?.email) emailRef.current?.focus();
       else if (error?.fields?.password) passwordRef.current?.focus();
       else emailRef.current?.focus();
     } catch {
-      setFormError('Could not reach the server. Check your connection and try again.');
+      setFormError(t('error.network'));
       setStatus('failed');
       emailRef.current?.focus();
     }
@@ -96,7 +99,7 @@ export default function SignInPage() {
 
   return (
     <div className="page page--narrow">
-      <h1>Sign in</h1>
+      <h1>{t('signIn.title')}</h1>
 
       {/*
         One live region for the whole form. Announced politely so a screen
@@ -106,13 +109,13 @@ export default function SignInPage() {
         {formError ? (
           <p className="alert alert--error">{formError}</p>
         ) : status === 'succeeded' ? (
-          <p className="alert alert--success">Signed in. Taking you to your account.</p>
+          <p className="alert alert--success">{t('signIn.success')}</p>
         ) : null}
       </div>
 
       <form className="form" onSubmit={onSubmit} noValidate aria-busy={busy}>
         <div className="field">
-          <label htmlFor="email">Email address</label>
+          <label htmlFor="email">{t('field.email.label')}</label>
           <input
             ref={emailRef}
             id="email"
@@ -133,7 +136,7 @@ export default function SignInPage() {
         </div>
 
         <div className="field">
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password">{t('field.password.label')}</label>
           <input
             ref={passwordRef}
             id="password"
@@ -153,7 +156,7 @@ export default function SignInPage() {
         </div>
 
         <button className="btn btn--primary" type="submit" disabled={busy}>
-          {busy ? 'Signing in…' : 'Sign in'}
+          {busy ? t('signIn.submit.busy') : t('signIn.submit')}
         </button>
       </form>
     </div>
