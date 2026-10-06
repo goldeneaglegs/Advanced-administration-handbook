@@ -1,6 +1,6 @@
 # Phase 0 — Product Definition (DRAFT FOR APPROVAL)
 
-**Status:** Draft. Not approved. No production code written.
+**Status:** Phase 0 frame accepted. Four blocking decisions resolved (see §0a). No production code written.
 **Date:** 2026-10-06
 **Branch:** `claude/global-app-master-build-vs6h2r`
 **Author:** Lead product engineer / UX / security / QA / deployment (single owner)
@@ -21,6 +21,35 @@ matter for approval:
 Nothing in this document invents business rules, pricing, legal terms, company data, user
 data, integrations, or content. Where those were needed, I left a **DECISION REQUIRED**
 marker instead of a plausible-looking placeholder.
+
+---
+
+## 0a. Decisions resolved by the client (2026-10-06)
+
+| # | Question | Decision |
+|---|---|---|
+| 1 | Build posture | **Option B — adjacent product.** The new application runs alongside the existing WordPress site and owns the operational workflow. WordPress keeps marketing, content, SEO, URLs and schema. |
+| 2 | Repository | **New dedicated repository** for application code. Not the handbook fork. To be created as a Phase 2 prerequisite. |
+| 8 | Data residency | **GCC region.** Personal data stays in the Gulf; a GCC privacy regime applies (Saudi PDPL / UAE PDPL). |
+| 6 + 7 | Pipeline stages and service catalogue | **I draft, you correct.** Drafts appear in Phase 1 explicitly labelled as proposals, never as fact. |
+
+Consequences recorded here so they are not lost:
+
+- Option B means the new application is **not** allowed to own any public, indexed URL. Any
+  public-facing marketing or job-listing page stays in WordPress. The new application lives
+  behind authentication on its own hostname or path, and the only link between the two is a
+  one-way entry point from WordPress into the app. That boundary is what makes rollback a
+  single link change.
+- GCC residency removes platform-as-a-service hosts that cannot pin compute and storage to a
+  Gulf region. This changes the hosting recommendation in §12 — see Phase 1 §1 for the
+  resolved topology. Residency is now a hard architectural constraint, not a preference.
+- Drafted stages and service types are **configuration data, not code**. They are seeded as
+  editable rows, so correcting them later is an admin action rather than a deployment.
+
+Still open, carried into Phase 1 as marked gaps: #4 (application name), #5 (employer
+self-service in v1), #9 (retention periods), #10 (government API scope), #11 (languages
+beyond en/ar), #12 (email provider), #13 (exact hosting account and domain), #14 (brand
+assets and exact hex values), #15 (approved legal content).
 
 ---
 
@@ -58,7 +87,7 @@ back to today's state. Option C's cost is not the first release, it is year two:
 role-based workflow, audit logging and document handling inside WordPress become permanent
 maintenance debt. Option A throws away a working, indexed asset for no business reason.
 
-**DECISION REQUIRED #1: Confirm A, B, or C.** Everything downstream depends on this.
+**RESOLVED: Option B.** See §0a.
 
 ### Second structural issue: repository
 
@@ -70,7 +99,7 @@ this file is safe here. Application code is not.
 **RECOMMENDED:** create a dedicated repository (e.g. `goldeneaglegs/gegs-platform`) before
 Phase 2. I can request it be added to this session.
 
-**DECISION REQUIRED #2: Confirm the target repository for application code.**
+**RESOLVED: a new dedicated repository.** See §0a.
 
 ---
 
@@ -377,14 +406,14 @@ theme functions, so that it is deactivatable — which is also its rollback.
 
 | # | Question | Blocks |
 |---|---|---|
-| 1 | Greenfield replacement (A), adjacent product (B), or WordPress extension (C)? | Everything |
-| 2 | Target repository for application code | Phase 2 |
+| ~~1~~ | ~~Build posture~~ | **RESOLVED — B** |
+| ~~2~~ | ~~Target repository~~ | **RESOLVED — new repo** |
 | 3 | Confirm / correct the problem statement in §2 | Everything |
 | 4 | Application name | Brand, Phase 1 |
 | 5 | Confirm roles; do employers self-serve in v1? | Scope, schema |
-| 6 | Real recruitment stages and real case stages | Core workflow |
-| 7 | Government-services catalogue + document checklist per service | Core workflow |
-| 8 | Data residency + governing privacy law | Hosting, schema, retention |
+| 6 | Real recruitment stages and real case stages | **Drafted in Phase 1 for your correction** |
+| 7 | Government-services catalogue + document checklist per service | **Drafted in Phase 1 for your correction** |
+| ~~8~~ | ~~Data residency~~ | **RESOLVED — GCC region** |
 | 9 | Retention periods after case/application closure | Schema, jobs |
 | 10 | Any government API integration in scope? | Architecture |
 | 11 | Languages beyond English + Arabic | i18n |
@@ -393,7 +422,9 @@ theme functions, so that it is deactivatable — which is also its rollback.
 | 14 | Brand assets: logo files, exact Gold and Navy hex values, licensed typefaces | Design system |
 | 15 | Approved legal content: privacy policy, terms, cookie notice | Public pages |
 
-Items 1, 3, 6, 7 and 8 are the true blockers. The other ten I can sequence around.
+Items 1, 2, 6, 7 and 8 are resolved. **Item 3 (the problem statement) is now the single
+most valuable answer you can give me** — Phase 1 is built on the §2 statement as written, so
+if it is wrong, say so and I will rework Phase 1 rather than build on a wrong premise.
 
 ---
 
