@@ -1,12 +1,3 @@
-// Golden Eagle GS operational platform — database schema.
-//
-// Milestone 0 establishes the datasource, the generator, and a baseline
-// migration that installs the PostgreSQL extensions the approved Phase 1 §2
-// schema depends on. No business tables exist yet: those arrive in Milestone 1,
-// and every business enumeration (pipeline stages, service types, case stages)
-// will be a TABLE rather than a Postgres enum, so that correcting it is an
-// admin edit and not a migration (Phase 1 §2.1).
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,4 +5,444 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model application_stage_history {
+  id                                                                       String           @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  application_id                                                           String           @db.Uuid
+  from_stage_id                                                            String?          @db.Uuid
+  to_stage_id                                                              String           @db.Uuid
+  changed_by_user_id                                                       String?          @db.Uuid
+  reason                                                                   String?
+  changed_at                                                               DateTime         @default(now()) @db.Timestamptz(6)
+  applications                                                             applications     @relation(fields: [application_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                                                                    users?           @relation(fields: [changed_by_user_id], references: [id], onUpdate: NoAction)
+  pipeline_stages_application_stage_history_from_stage_idTopipeline_stages pipeline_stages? @relation("application_stage_history_from_stage_idTopipeline_stages", fields: [from_stage_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  pipeline_stages_application_stage_history_to_stage_idTopipeline_stages   pipeline_stages  @relation("application_stage_history_to_stage_idTopipeline_stages", fields: [to_stage_id], references: [id], onUpdate: NoAction)
+
+  @@index([application_id, changed_at], map: "application_stage_history_application")
+}
+
+model applications {
+  id                        String                      @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  requirement_id            String                      @db.Uuid
+  candidate_profile_id      String                      @db.Uuid
+  stage_id                  String                      @db.Uuid
+  stage_changed_at          DateTime                    @default(now()) @db.Timestamptz(6)
+  owner_user_id             String?                     @db.Uuid
+  outcome_reason            String?
+  created_at                DateTime                    @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime                    @default(now()) @db.Timestamptz(6)
+  application_stage_history application_stage_history[]
+  candidate_profiles        candidate_profiles          @relation(fields: [candidate_profile_id], references: [id], onUpdate: NoAction)
+  users                     users?                      @relation(fields: [owner_user_id], references: [id], onUpdate: NoAction)
+  requirements              requirements                @relation(fields: [requirement_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pipeline_stages           pipeline_stages             @relation(fields: [stage_id], references: [id], onUpdate: NoAction)
+
+  @@unique([requirement_id, candidate_profile_id], map: "applications_one_per_candidate_per_requirement")
+  @@index([candidate_profile_id], map: "applications_candidate")
+  @@index([owner_user_id], map: "applications_owner")
+  @@index([stage_id], map: "applications_stage")
+  @@index([stage_changed_at], map: "applications_stage_changed_at")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model audit_log {
+  id            String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  actor_user_id String?  @db.Uuid
+  actor_ip      String?  @db.Inet
+  action        String
+  subject_type  String
+  subject_id    String?  @db.Uuid
+  before_json   Json?
+  after_json    Json?
+  request_id    String?
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+  users         users?   @relation(fields: [actor_user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([action, created_at(sort: Desc)], map: "audit_log_action")
+  @@index([actor_user_id, created_at(sort: Desc)], map: "audit_log_actor")
+  @@index([created_at(sort: Desc)], map: "audit_log_created_at")
+  @@index([subject_type, subject_id, created_at(sort: Desc)], map: "audit_log_subject")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model candidate_profiles {
+  id                   String          @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  user_id              String          @db.Uuid
+  full_name            String
+  nationality_code     String?         @db.Char(2)
+  dob                  DateTime?       @db.Date
+  phone_e164           String?
+  current_country_code String?         @db.Char(2)
+  headline             String?
+  created_at           DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime        @default(now()) @db.Timestamptz(6)
+  deleted_at           DateTime?       @db.Timestamptz(6)
+  applications         applications[]
+  users                users           @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+  documents            documents[]
+  service_cases        service_cases[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model case_stage_history {
+  id                                                        String        @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  case_id                                                   String        @db.Uuid
+  from_stage_id                                             String?       @db.Uuid
+  to_stage_id                                               String        @db.Uuid
+  changed_by_user_id                                        String?       @db.Uuid
+  reason                                                    String?
+  changed_at                                                DateTime      @default(now()) @db.Timestamptz(6)
+  service_cases                                             service_cases @relation(fields: [case_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                                                     users?        @relation(fields: [changed_by_user_id], references: [id], onUpdate: NoAction)
+  case_stages_case_stage_history_from_stage_idTocase_stages case_stages?  @relation("case_stage_history_from_stage_idTocase_stages", fields: [from_stage_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  case_stages_case_stage_history_to_stage_idTocase_stages   case_stages   @relation("case_stage_history_to_stage_idTocase_stages", fields: [to_stage_id], references: [id], onUpdate: NoAction)
+
+  @@index([case_id, changed_at], map: "case_stage_history_case")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model case_stages {
+  id                                                               String               @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  service_type_id                                                  String?              @db.Uuid
+  key                                                              String
+  name_en                                                          String
+  name_ar                                                          String?
+  sort_order                                                       Int
+  is_terminal                                                      Boolean              @default(false)
+  active                                                           Boolean              @default(true)
+  created_at                                                       DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at                                                       DateTime             @default(now()) @db.Timestamptz(6)
+  case_stage_history_case_stage_history_from_stage_idTocase_stages case_stage_history[] @relation("case_stage_history_from_stage_idTocase_stages")
+  case_stage_history_case_stage_history_to_stage_idTocase_stages   case_stage_history[] @relation("case_stage_history_to_stage_idTocase_stages")
+  service_types                                                    service_types?       @relation(fields: [service_type_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  service_cases                                                    service_cases[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model document_access_log {
+  id            String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  document_id   String    @db.Uuid
+  actor_user_id String?   @db.Uuid
+  actor_ip      String?   @db.Inet
+  action        String
+  request_id    String?
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  users         users?    @relation(fields: [actor_user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  documents     documents @relation(fields: [document_id], references: [id], onUpdate: NoAction)
+
+  @@index([actor_user_id, created_at(sort: Desc)], map: "document_access_log_actor")
+  @@index([document_id, created_at(sort: Desc)], map: "document_access_log_document")
+}
+
+model document_requirements {
+  id               String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  service_type_id  String         @db.Uuid
+  document_type_id String         @db.Uuid
+  mandatory        Boolean        @default(true)
+  created_at       DateTime       @default(now()) @db.Timestamptz(6)
+  document_types   document_types @relation(fields: [document_type_id], references: [id], onUpdate: NoAction)
+  service_types    service_types  @relation(fields: [service_type_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([service_type_id, document_type_id], map: "document_requirements_unique")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model document_types {
+  id                    String                  @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  key                   String                  @unique
+  name_en               String
+  name_ar               String?
+  requires_expiry       Boolean                 @default(false)
+  active                Boolean                 @default(true)
+  created_at            DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime                @default(now()) @db.Timestamptz(6)
+  document_requirements document_requirements[]
+  documents             documents[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model documents {
+  id                   String                @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  candidate_profile_id String?               @db.Uuid
+  service_case_id      String?               @db.Uuid
+  document_type_id     String                @db.Uuid
+  storage_key          String                @unique
+  display_name         String?
+  mime                 String
+  bytes                BigInt
+  checksum_sha256      Bytes
+  issued_on            DateTime?             @db.Date
+  expires_on           DateTime?             @db.Date
+  scan_status          scan_status           @default(pending)
+  scanned_at           DateTime?             @db.Timestamptz(6)
+  uploaded_by_user_id  String?               @db.Uuid
+  created_at           DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime              @default(now()) @db.Timestamptz(6)
+  deleted_at           DateTime?             @db.Timestamptz(6)
+  document_access_log  document_access_log[]
+  candidate_profiles   candidate_profiles?   @relation(fields: [candidate_profile_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  document_types       document_types        @relation(fields: [document_type_id], references: [id], onUpdate: NoAction)
+  service_cases        service_cases?        @relation(fields: [service_case_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users                users?                @relation(fields: [uploaded_by_user_id], references: [id], onUpdate: NoAction)
+}
+
+model email_tokens {
+  id          String              @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  user_id     String              @db.Uuid
+  purpose     email_token_purpose
+  token_hash  Bytes               @unique
+  expires_at  DateTime            @db.Timestamptz(6)
+  consumed_at DateTime?           @db.Timestamptz(6)
+  created_at  DateTime            @default(now()) @db.Timestamptz(6)
+  users       users               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model employer_contacts {
+  employer_id String    @db.Uuid
+  user_id     String    @db.Uuid
+  is_primary  Boolean   @default(false)
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  employers   employers @relation(fields: [employer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([employer_id, user_id])
+  @@index([user_id], map: "employer_contacts_user")
+}
+
+model employers {
+  id                String              @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  name              String
+  country_code      String?             @db.Char(2)
+  status            employer_status     @default(active)
+  created_at        DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime            @default(now()) @db.Timestamptz(6)
+  deleted_at        DateTime?           @db.Timestamptz(6)
+  employer_contacts employer_contacts[]
+  requirements      requirements[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model notification_templates {
+  id           String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  template_key String   @unique
+  subject_en   String
+  subject_ar   String?
+  body_en      String
+  body_ar      String?
+  updated_by   String?  @db.Uuid
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime @default(now()) @db.Timestamptz(6)
+  users        users?   @relation(fields: [updated_by], references: [id], onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model notifications {
+  id             String               @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  user_id        String               @db.Uuid
+  channel        notification_channel @default(email)
+  template_key   String
+  payload_json   Json                 @default("{}")
+  queued_at      DateTime             @default(now()) @db.Timestamptz(6)
+  sent_at        DateTime?            @db.Timestamptz(6)
+  failed_at      DateTime?            @db.Timestamptz(6)
+  failure_reason String?
+  attempts       Int                  @default(0)
+  read_at        DateTime?            @db.Timestamptz(6)
+  users          users                @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id, queued_at(sort: Desc)], map: "notifications_user")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model organisations {
+  id           String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  legal_name   String
+  country_code String   @db.Char(2)
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime @default(now()) @db.Timestamptz(6)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pipeline_stages {
+  id                                                                                 String                      @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  key                                                                                String                      @unique
+  name_en                                                                            String
+  name_ar                                                                            String?
+  sort_order                                                                         Int                         @unique(map: "pipeline_stages_sort_order")
+  is_terminal                                                                        Boolean                     @default(false)
+  is_success                                                                         Boolean?
+  active                                                                             Boolean                     @default(true)
+  created_at                                                                         DateTime                    @default(now()) @db.Timestamptz(6)
+  updated_at                                                                         DateTime                    @default(now()) @db.Timestamptz(6)
+  application_stage_history_application_stage_history_from_stage_idTopipeline_stages application_stage_history[] @relation("application_stage_history_from_stage_idTopipeline_stages")
+  application_stage_history_application_stage_history_to_stage_idTopipeline_stages   application_stage_history[] @relation("application_stage_history_to_stage_idTopipeline_stages")
+  applications                                                                       applications[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model requirements {
+  id            String             @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  employer_id   String             @db.Uuid
+  title         String
+  description   String?
+  country_code  String?            @db.Char(2)
+  headcount     Int                @default(1)
+  status        requirement_status @default(open)
+  owner_user_id String?            @db.Uuid
+  created_at    DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime           @default(now()) @db.Timestamptz(6)
+  closed_at     DateTime?          @db.Timestamptz(6)
+  applications  applications[]
+  employers     employers          @relation(fields: [employer_id], references: [id], onUpdate: NoAction)
+  users         users?             @relation(fields: [owner_user_id], references: [id], onUpdate: NoAction)
+
+  @@index([employer_id], map: "requirements_employer")
+}
+
+model roles {
+  id         String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  key        String       @unique
+  name_en    String
+  name_ar    String?
+  user_roles user_roles[]
+}
+
+model service_cases {
+  id                   String               @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  service_type_id      String               @db.Uuid
+  candidate_profile_id String               @db.Uuid
+  stage_id             String               @db.Uuid
+  stage_changed_at     DateTime             @default(now()) @db.Timestamptz(6)
+  owner_user_id        String?              @db.Uuid
+  reference            String?
+  outcome              String?
+  opened_at            DateTime             @default(now()) @db.Timestamptz(6)
+  closed_at            DateTime?            @db.Timestamptz(6)
+  created_at           DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime             @default(now()) @db.Timestamptz(6)
+  case_stage_history   case_stage_history[]
+  documents            documents[]
+  candidate_profiles   candidate_profiles   @relation(fields: [candidate_profile_id], references: [id], onUpdate: NoAction)
+  users                users?               @relation(fields: [owner_user_id], references: [id], onUpdate: NoAction)
+  service_types        service_types        @relation(fields: [service_type_id], references: [id], onUpdate: NoAction)
+  case_stages          case_stages          @relation(fields: [stage_id], references: [id], onUpdate: NoAction)
+
+  @@index([candidate_profile_id], map: "service_cases_candidate")
+  @@index([stage_changed_at], map: "service_cases_stage_changed_at")
+  @@index([service_type_id], map: "service_cases_type")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model service_types {
+  id                    String                  @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  key                   String                  @unique
+  name_en               String
+  name_ar               String?
+  description_en        String?
+  description_ar        String?
+  active                Boolean                 @default(true)
+  sort_order            Int                     @default(0)
+  created_at            DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime                @default(now()) @db.Timestamptz(6)
+  case_stages           case_stages[]
+  document_requirements document_requirements[]
+  service_cases         service_cases[]
+}
+
+model sessions {
+  id           String    @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  user_id      String    @db.Uuid
+  token_hash   Bytes     @unique
+  ip           String?   @db.Inet
+  user_agent   String?
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  last_seen_at DateTime  @default(now()) @db.Timestamptz(6)
+  expires_at   DateTime  @db.Timestamptz(6)
+  revoked_at   DateTime? @db.Timestamptz(6)
+  users        users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([expires_at], map: "sessions_expires_at")
+}
+
+model user_roles {
+  user_id                            String   @db.Uuid
+  role_id                            String   @db.Uuid
+  granted_by                         String?  @db.Uuid
+  granted_at                         DateTime @default(now()) @db.Timestamptz(6)
+  users_user_roles_granted_byTousers users?   @relation("user_roles_granted_byTousers", fields: [granted_by], references: [id], onUpdate: NoAction)
+  roles                              roles    @relation(fields: [role_id], references: [id], onUpdate: NoAction)
+  users_user_roles_user_idTousers    users    @relation("user_roles_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([user_id, role_id])
+  @@index([role_id], map: "user_roles_role_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model users {
+  id                                      String                      @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  email                                   String                      @db.Citext
+  password_hash                           String
+  email_verified_at                       DateTime?                   @db.Timestamptz(6)
+  locale                                  String                      @default("en")
+  timezone                                String                      @default("UTC")
+  status                                  user_status                 @default(invited)
+  failed_login_count                      Int                         @default(0)
+  locked_until                            DateTime?                   @db.Timestamptz(6)
+  password_changed_at                     DateTime?                   @db.Timestamptz(6)
+  last_login_at                           DateTime?                   @db.Timestamptz(6)
+  created_at                              DateTime                    @default(now()) @db.Timestamptz(6)
+  updated_at                              DateTime                    @default(now()) @db.Timestamptz(6)
+  deleted_at                              DateTime?                   @db.Timestamptz(6)
+  application_stage_history               application_stage_history[]
+  applications                            applications[]
+  audit_log                               audit_log[]
+  candidate_profiles                      candidate_profiles[]
+  case_stage_history                      case_stage_history[]
+  document_access_log                     document_access_log[]
+  documents                               documents[]
+  email_tokens                            email_tokens[]
+  employer_contacts                       employer_contacts[]
+  notification_templates                  notification_templates[]
+  notifications                           notifications[]
+  requirements                            requirements[]
+  service_cases                           service_cases[]
+  sessions                                sessions[]
+  user_roles_user_roles_granted_byTousers user_roles[]                @relation("user_roles_granted_byTousers")
+  user_roles_user_roles_user_idTousers    user_roles[]                @relation("user_roles_user_idTousers")
+}
+
+enum email_token_purpose {
+  verify_email
+  reset_password
+}
+
+enum employer_status {
+  active
+  inactive
+}
+
+enum notification_channel {
+  email
+}
+
+enum requirement_status {
+  open
+  closed
+}
+
+enum scan_status {
+  pending
+  clean
+  infected
+  error
+}
+
+enum user_status {
+  invited
+  active
+  suspended
 }
