@@ -46,6 +46,7 @@ export default function SignInPage() {
     // authoritative. On failure, focus moves to the first invalid field.
     const next: Record<string, string> = {};
     if (email.length === 0) next.email = 'Enter your email address.';
+    // secret-scan-allow: a validation message for an empty field, not a credential.
     if (password.length === 0) next.password = 'Enter your password.';
     if (Object.keys(next).length > 0) {
       setFieldErrors(next);

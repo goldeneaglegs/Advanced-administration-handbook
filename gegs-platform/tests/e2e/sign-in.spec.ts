@@ -10,6 +10,7 @@ import { hashPassword } from '@/lib/auth/password';
  */
 const db = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL! } } });
 
+// secret-scan-allow: throwaway fixture password for a user this spec creates and discards.
 const PASSWORD = 'correct-horse-battery-staple-42';
 const EMAIL = `signin-${Date.now()}@signin.test`;
 

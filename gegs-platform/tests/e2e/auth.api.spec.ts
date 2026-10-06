@@ -222,6 +222,7 @@ test.describe('register', () => {
       '/api/auth/register',
       {
         email: uniqueEmail('breached'),
+        // secret-scan-allow: a throwaway fixture from the breached-password corpus, chosen BECAUSE it must be rejected. Never a real credential.
         password: 'passwordpassword',
         full_name: 'B',
       },
@@ -445,6 +446,7 @@ test.describe('reset-password', () => {
     const response = await post(
       request,
       '/api/auth/reset-password',
+      // secret-scan-allow: throwaway fixture password for a test user created and discarded in this spec.
       { token: resetToken, password: 'passwordpassword' },
       token,
     );
@@ -543,6 +545,7 @@ test.describe('accept-invite', () => {
     const response = await post(
       request,
       '/api/auth/accept-invite',
+      // secret-scan-allow: throwaway fixture password for a test user created and discarded in this spec.
       { token: inviteToken, password: 'passwordpassword' },
       token,
     );
@@ -610,6 +613,7 @@ test.describe('no endpoint leaks internals', () => {
   test('error bodies contain no driver, path or schema detail', async ({ request }) => {
     const token = await csrf(request);
     const responses = await Promise.all([
+      // secret-scan-allow: a deliberately WRONG password, sent to prove login throttling refuses it.
       post(request, '/api/auth/login', { email: 'x@y.test', password: 'wrongwrongwrong' }, token),
       post(request, '/api/auth/verify-email', { token: 'z'.repeat(40) }, token),
       post(request, '/api/auth/reset-password', { token: 'z'.repeat(40), password: STRONG }, token),
