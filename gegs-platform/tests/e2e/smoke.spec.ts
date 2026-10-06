@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { localePath } from './_lib/locale';
 
 /**
  * Milestone 0 browser checks. These assert the architectural invariants that
@@ -10,14 +11,14 @@ import { expect, test } from '@playwright/test';
  */
 test.describe('milestone 0 smoke', () => {
   test('landing page renders and declares itself unindexable', async ({ page }) => {
-    const response = await page.goto('/');
+    const response = await page.goto(localePath('/'));
     expect(response?.status()).toBe(200);
     expect(response?.headers()['x-robots-tag']).toContain('noindex');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   });
 
   test('sets the approved security headers', async ({ page }) => {
-    const response = await page.goto('/');
+    const response = await page.goto(localePath('/'));
     const headers = response?.headers() ?? {};
     expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
     expect(headers['x-content-type-options']).toBe('nosniff');
@@ -60,7 +61,7 @@ test.describe('milestone 0 smoke', () => {
   });
 
   test('skip link is the first keyboard stop and becomes visible on focus', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(localePath('/'));
     await page.keyboard.press('Tab');
     const skip = page.getByRole('link', { name: /skip to content/i });
     await expect(skip).toBeFocused();
@@ -69,7 +70,7 @@ test.describe('milestone 0 smoke', () => {
   });
 
   test('no horizontal page scroll at this breakpoint', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(localePath('/'));
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     );
@@ -77,7 +78,7 @@ test.describe('milestone 0 smoke', () => {
   });
 
   test('every focusable element shows a visible focus ring', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(localePath('/'));
     const focusables = await page.locator('a[href], button, input, select, textarea').all();
     expect(focusables.length).toBeGreaterThan(0);
     for (const element of focusables) {

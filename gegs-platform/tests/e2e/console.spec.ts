@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { localePath } from './_lib/locale';
 
 /**
  * Console and network review (Phase 1 §14.4 gate).
@@ -22,7 +23,7 @@ test('loads with no console errors and no failed requests', async ({ page }) => 
     if (response.status() >= 400) failed.push(`${response.status()} ${response.url()}`);
   });
 
-  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.goto(localePath('/'), { waitUntil: 'networkidle' });
 
   expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
   expect(failed, failed.join('\n')).toEqual([]);

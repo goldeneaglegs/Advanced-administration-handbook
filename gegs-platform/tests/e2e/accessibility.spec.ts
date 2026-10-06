@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { localePath } from './_lib/locale';
 
 /**
  * Accessibility gate (Phase 1 §13, §14.1). axe-core runs on every page and
@@ -13,7 +14,7 @@ const PAGES = ['/'];
 
 for (const path of PAGES) {
   test(`${path} has no detectable WCAG 2.2 A/AA violations`, async ({ page }) => {
-    await page.goto(path);
+    await page.goto(localePath(path));
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
@@ -26,7 +27,7 @@ for (const path of PAGES) {
 }
 
 test('page exposes one h1 and a main landmark', async ({ page }) => {
-  await page.goto('/');
+  await page.goto(localePath('/'));
   await expect(page.locator('h1')).toHaveCount(1);
   await expect(page.locator('main')).toHaveCount(1);
 });
@@ -46,7 +47,7 @@ test('remains usable at 200% zoom with no horizontal scroll', async ({ page }) =
   // Phase 1 §13: reflow at 200% zoom. Emulated by halving the viewport width,
   // which is the standard equivalent.
   await page.setViewportSize({ width: 640, height: 512 });
-  await page.goto('/');
+  await page.goto(localePath('/'));
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );

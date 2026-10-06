@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
 import { hashPassword } from '@/lib/auth/password';
+import { localePath } from './_lib/locale';
 
 /**
  * The five remaining auth screens. Targeted UI checks only — the endpoints are
@@ -59,14 +60,14 @@ test.describe('accessibility and structure', () => {
     ['/accept-invite?token=placeholder-token-value', 'Set your password'],
   ] as const) {
     test(`${path} has one h1 and no WCAG 2.2 A/AA violations`, async ({ page }) => {
-      await page.goto(path);
+      await page.goto(localePath(path));
       await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
       await expect(page.locator('h1')).toHaveCount(1);
       await expectNoAxeViolations(page);
     });
 
     test(`${path} has no horizontal scroll`, async ({ page }) => {
-      await page.goto(path);
+      await page.goto(localePath(path));
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
       );
@@ -77,7 +78,7 @@ test.describe('accessibility and structure', () => {
 
 test.describe('register', () => {
   test('server field error is shown and associated with its input', async ({ page }) => {
-    await page.goto('/register');
+    await page.goto(localePath('/register'));
     await page.getByLabel('Full name').fill('Screen Test');
     await page.getByLabel('Email address').fill(unique('weak'));
     await page.getByLabel('Password', { exact: true }).fill('passwordpassword'); // in the breached corpus
@@ -92,7 +93,7 @@ test.describe('register', () => {
   });
 
   test('accepted registration shows the server message and hides the form', async ({ page }) => {
-    await page.goto('/register');
+    await page.goto(localePath('/register'));
     await page.getByLabel('Full name').fill('Screen Test');
     await page.getByLabel('Email address').fill(unique('ok'));
     await page.getByLabel('Password', { exact: true }).fill(STRONG);
@@ -105,7 +106,7 @@ test.describe('register', () => {
 
 test.describe('forgot-password', () => {
   test('always reports acceptance, even for an unknown address', async ({ page }) => {
-    await page.goto('/forgot-password');
+    await page.goto(localePath('/forgot-password'));
     await page.getByLabel('Email address').fill(unique('ghost'));
     await page.getByRole('button', { name: 'Send reset link' }).click();
     await expect(page.getByRole('status')).toContainText(/reset link is on its way/i);
@@ -114,7 +115,7 @@ test.describe('forgot-password', () => {
 
 test.describe('verify-email', () => {
   test('a missing token is explained rather than silently failing', async ({ page }) => {
-    await page.goto('/verify-email');
+    await page.goto(localePath('/verify-email'));
     await expect(page.getByText(/missing its confirmation code/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /confirm my email/i })).toHaveCount(0);
   });
@@ -122,7 +123,7 @@ test.describe('verify-email', () => {
   test('a valid token confirms the address', async ({ page }) => {
     const email = unique('verify');
     const token = await seedToken(email, 'verify_email', 'invited');
-    await page.goto(`/verify-email?token=${token}`);
+    await page.goto(localePath(`/verify-email?token=${token}`));
     await page.getByRole('button', { name: 'Confirm my email' }).click();
     await expect(page.getByRole('status')).toContainText(/email is confirmed/i);
 
@@ -132,7 +133,7 @@ test.describe('verify-email', () => {
   });
 
   test('an invalid token shows the generic failure, not success', async ({ page }) => {
-    await page.goto('/verify-email?token=not-a-real-token-value-at-all');
+    await page.goto(localePath('/verify-email?token=not-a-real-token-value-at-all'));
     await page.getByRole('button', { name: 'Confirm my email' }).click();
     await expect(page.getByRole('status')).toContainText(/no longer valid/i);
     await expect(page.getByText(/email is confirmed/i)).toHaveCount(0);
@@ -141,7 +142,7 @@ test.describe('verify-email', () => {
 
 test.describe('reset-password', () => {
   test('mismatched confirmation is caught in the browser before any request', async ({ page }) => {
-    await page.goto('/reset-password?token=placeholder-token-value');
+    await page.goto(localePath('/reset-password?token=placeholder-token-value'));
     await page.getByLabel('New password', { exact: true }).fill(STRONG);
     await page.getByLabel('Confirm new password', { exact: true }).fill('something-else-entirely');
     await page.getByRole('button', { name: 'Set new password' }).click();
@@ -151,7 +152,7 @@ test.describe('reset-password', () => {
   test('a valid token sets the password', async ({ page }) => {
     const email = unique('reset');
     const token = await seedToken(email, 'reset_password', 'active');
-    await page.goto(`/reset-password?token=${token}`);
+    await page.goto(localePath(`/reset-password?token=${token}`));
     await page.getByLabel('New password', { exact: true }).fill('a-different-long-passphrase-77');
     await page
       .getByLabel('Confirm new password', { exact: true })
@@ -165,7 +166,7 @@ test.describe('accept-invite', () => {
   test('a valid invitation sets the initial password and activates', async ({ page }) => {
     const email = unique('invite');
     const token = await seedToken(email, 'accept_invite', 'invited');
-    await page.goto(`/accept-invite?token=${token}`);
+    await page.goto(localePath(`/accept-invite?token=${token}`));
     await page.getByLabel('Password', { exact: true }).fill(STRONG);
     await page.getByLabel('Confirm password', { exact: true }).fill(STRONG);
     await page.getByRole('button', { name: 'Set new password' }).click();

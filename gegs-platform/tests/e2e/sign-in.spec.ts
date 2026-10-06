@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
 import { hashPassword } from '@/lib/auth/password';
+import { localePath } from './_lib/locale';
 
 /**
  * Login screen. Targeted checks only: the backend is already covered by the
@@ -36,7 +37,7 @@ test.afterAll(async () => {
 });
 
 test('renders with no detectable WCAG 2.2 A/AA violations', async ({ page }) => {
-  await page.goto('/sign-in');
+  await page.goto(localePath('/sign-in'));
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze();
@@ -45,7 +46,7 @@ test('renders with no detectable WCAG 2.2 A/AA violations', async ({ page }) => 
 });
 
 test('fields are properly labelled and reachable by keyboard', async ({ page }) => {
-  await page.goto('/sign-in');
+  await page.goto(localePath('/sign-in'));
   await expect(page.getByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible();
 
   // Labels resolve by accessible name, which is what a screen reader announces.
@@ -62,7 +63,7 @@ test('fields are properly labelled and reachable by keyboard', async ({ page }) 
 });
 
 test('empty submit reports per-field errors and focuses the first one', async ({ page }) => {
-  await page.goto('/sign-in');
+  await page.goto(localePath('/sign-in'));
   await page.getByRole('button', { name: 'Sign in' }).click();
 
   await expect(page.getByText('Enter your email address.')).toBeVisible();
@@ -73,7 +74,7 @@ test('empty submit reports per-field errors and focuses the first one', async ({
 });
 
 test('wrong password shows the generic failure and no success state', async ({ page }) => {
-  await page.goto('/sign-in');
+  await page.goto(localePath('/sign-in'));
   await page.getByLabel('Email address').fill(EMAIL);
   await page.getByLabel('Password').fill('definitely-the-wrong-password');
   await page.getByRole('button', { name: 'Sign in' }).click();
@@ -86,7 +87,7 @@ test('wrong password shows the generic failure and no success state', async ({ p
 });
 
 test('correct credentials sign in and navigate away', async ({ page }) => {
-  await page.goto('/sign-in');
+  await page.goto(localePath('/sign-in'));
   await page.getByLabel('Email address').fill(EMAIL);
   await page.getByLabel('Password').fill(PASSWORD);
   // Submit with Enter, proving the form works without a pointer.
@@ -102,7 +103,7 @@ test('correct credentials sign in and navigate away', async ({ page }) => {
 });
 
 test('no horizontal scroll at this breakpoint', async ({ page }) => {
-  await page.goto('/sign-in');
+  await page.goto(localePath('/sign-in'));
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
