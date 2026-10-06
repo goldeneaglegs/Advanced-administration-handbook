@@ -1,0 +1,11 @@
+.next
+node_modules
+coverage
+test-results
+playwright-report
+prisma/migrations
+
+# Approved specification documents, copied verbatim from the Phase 0 and Phase 1
+# sign-off. Reformatting them would alter approved content.
+docs/00-PRODUCT-DEFINITION.md
+docs/01-ARCHITECTURE-AND-UX-PLAN.md

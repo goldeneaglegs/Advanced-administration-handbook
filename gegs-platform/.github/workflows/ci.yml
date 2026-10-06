@@ -1,0 +1,130 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+# Phase 1 §15.2: the pipeline gates every push. Nothing reaches a deploy step
+# without passing all of it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    name: Lint, format, typecheck, secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - name: Colour contrast gate
+        run: npm run contrast:check
+      - name: Secret scan
+        run: npm run secret:scan
+
+  test:
+    name: Unit and integration tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gegs
+          POSTGRES_DB: gegs_test
+          # No password: the container is ephemeral, bound to localhost, and
+          # reachable only by this job. Not having a credential beats having a
+          # throwaway one committed to the repository.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U gegs -d gegs_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # CI-only throwaway values. Real secrets come from the platform secret
+      # manager at deploy time and never appear in a workflow file.
+      DATABASE_URL: postgresql://gegs@127.0.0.1:5432/gegs_test?schema=public
+      STORAGE_ENDPOINT: http://127.0.0.1:9000
+      STORAGE_REGION: me-central-1
+      STORAGE_BUCKET: gegs-documents-ci
+      STORAGE_ACCESS_KEY_ID: ci_access_key
+      STORAGE_SECRET_ACCESS_KEY: ci_secret_key
+      STORAGE_FORCE_PATH_STYLE: 'true'
+      APP_ORIGIN: http://127.0.0.1:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - name: Apply migrations
+        run: npx prisma migrate deploy
+      - run: npm run test:unit
+      - run: npm run test:integration
+
+  browser:
+    name: Browser checks
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gegs
+          POSTGRES_DB: gegs_test
+          # No password: the container is ephemeral, bound to localhost, and
+          # reachable only by this job. Not having a credential beats having a
+          # throwaway one committed to the repository.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U gegs -d gegs_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      minio:
+        image: bitnami/minio:latest
+        env:
+          MINIO_ROOT_USER: ci_access_key
+          MINIO_ROOT_PASSWORD: ci_secret_key
+          MINIO_DEFAULT_BUCKETS: gegs-documents-ci
+        ports: ['9000:9000']
+    env:
+      DATABASE_URL: postgresql://gegs@127.0.0.1:5432/gegs_test?schema=public
+      STORAGE_ENDPOINT: http://127.0.0.1:9000
+      STORAGE_REGION: me-central-1
+      STORAGE_BUCKET: gegs-documents-ci
+      STORAGE_ACCESS_KEY_ID: ci_access_key
+      STORAGE_SECRET_ACCESS_KEY: ci_secret_key
+      STORAGE_FORCE_PATH_STYLE: 'true'
+      APP_ORIGIN: http://127.0.0.1:3000
+      E2E_BASE_URL: http://127.0.0.1:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Start the application
+        run: |
+          npm run start -- --port 3000 &
+          npx wait-on http://127.0.0.1:3000/api/health --timeout 60000 || true
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

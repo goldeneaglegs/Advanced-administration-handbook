@@ -1,0 +1,17 @@
+// Golden Eagle GS operational platform — database schema.
+//
+// Milestone 0 establishes the datasource, the generator, and a baseline
+// migration that installs the PostgreSQL extensions the approved Phase 1 §2
+// schema depends on. No business tables exist yet: those arrive in Milestone 1,
+// and every business enumeration (pipeline stages, service types, case stages)
+// will be a TABLE rather than a Postgres enum, so that correcting it is an
+// admin edit and not a migration (Phase 1 §2.1).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}

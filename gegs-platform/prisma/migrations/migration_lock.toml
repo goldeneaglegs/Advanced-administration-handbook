@@ -1,0 +1,2 @@
+# Prevents a migration being generated against a different database engine.
+provider = "postgresql"

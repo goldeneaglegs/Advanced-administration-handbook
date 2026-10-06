@@ -1,0 +1,104 @@
+/*
+ * Milestone 0 baseline only. The design system (tokens, components, all eight
+ * component states) arrives in Milestone 4 per Phase 1 §16.
+ *
+ * Token values mirror src/design/tokens.ts, which is the single source of truth
+ * and is contrast-gated in CI.
+ */
+:root {
+  --navy-900: #0b1a2f;
+  --gold-600: #a67f30;
+  --paper-50: #fbfaf8;
+  --line-500: #8b8172;
+  --ink-700: #3a4452;
+
+  --space-4: 1rem;
+  --space-6: 2rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper-50);
+  color: var(--navy-900);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Phase 1 §10.4: the focus ring is never removed, and uses gold-600 on light
+   backgrounds because gold-500 fails the 3:1 non-text minimum. */
+:focus-visible {
+  outline: 2px solid var(--gold-600);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  inset-inline-start: var(--space-4);
+  inset-block-start: -3rem;
+  padding: 0.5rem 1rem;
+  background: var(--navy-900);
+  color: var(--paper-50);
+  transition: inset-block-start 120ms ease;
+}
+
+.skip-link:focus {
+  inset-block-start: var(--space-4);
+}
+
+/* Phase 1 §10.3: all motion is removable. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.page {
+  /* Phase 1 §11: 16px side gutter at the 360px floor, content capped at xl. */
+  max-width: 44rem;
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+.page h1 {
+  font-size: 1.5625rem;
+  line-height: 1.2;
+  margin-block: 0 var(--space-4);
+}
+
+.page dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--line-500);
+  border-radius: 8px;
+}
+
+.page dt {
+  color: var(--ink-700);
+}
+
+.page dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}

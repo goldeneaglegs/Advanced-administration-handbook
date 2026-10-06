@@ -1,0 +1,18 @@
+node_modules/
+.next/
+out/
+build/
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
+next-env.d.ts
+
+# Secrets: never committed. Only .env.example is tracked.
+.env
+.env.*
+!.env.example
+
+.DS_Store
+*.log
+/tmp/

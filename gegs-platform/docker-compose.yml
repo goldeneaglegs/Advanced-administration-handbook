@@ -1,0 +1,56 @@
+# Local development dependencies only. This file is never used to deploy.
+#
+# Credentials here are local fixtures, deliberately visible, and are rejected by
+# scripts/secret-scan.mjs if they ever appear outside this file and .env.example.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: gegs
+      POSTGRES_PASSWORD: gegs_local_dev
+      POSTGRES_DB: gegs
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U gegs -d gegs']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # S3-compatible private object storage, standing in for Amazon S3 locally.
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: gegs_local_minio
+      MINIO_ROOT_PASSWORD: gegs_local_minio_secret
+    ports:
+      - '127.0.0.1:9000:9000'
+      - '127.0.0.1:9001:9001'
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Creates the documents bucket and asserts it is PRIVATE (Phase 1 §5.2).
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 gegs_local_minio gegs_local_minio_secret &&
+      mc mb --ignore-existing local/gegs-documents-local &&
+      mc anonymous set none local/gegs-documents-local &&
+      echo 'bucket ready and private'
+      "
+
+volumes:
+  pgdata:
+  miniodata:
