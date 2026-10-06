@@ -2,16 +2,17 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Field } from '../_lib/Field';
+import { LocaleLink } from '../_lib/LocaleLink';
 import { StatusRegion } from '../_lib/StatusRegion';
 import { postAuth, tokenFromUrl } from '../_lib/client';
 
 /**
- * Set an initial password from an invitation link.
+ * Set a new password from a reset link.
  *
  * The confirmation field is checked in the browser only. It is not sent, and
  * the API has no second password field — this screen invents nothing.
  */
-export default function AcceptInvitePage() {
+export default function ResetPasswordPage() {
   const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -40,11 +41,11 @@ export default function AcceptInvitePage() {
     setError('');
     setFields({});
 
-    const result = await postAuth('/api/auth/accept-invite', { token, password: value });
+    const result = await postAuth('/api/auth/reset-password', { token, password: value });
 
     setBusy(false);
     if (result.ok) {
-      setSuccess('Your account is ready. Sign in to continue.');
+      setSuccess('Your password is set. You have been signed out everywhere, so sign in again.');
       return;
     }
     setError(result.message);
@@ -54,23 +55,23 @@ export default function AcceptInvitePage() {
 
   return (
     <div className="page page--narrow">
-      <h1>Set your password</h1>
+      <h1>Choose a new password</h1>
       <StatusRegion error={error} success={success} />
 
       {token === null ? null : token === '' ? (
         <p>
-          This invitation link is missing its code.{' '}
-          <span>Ask your administrator to send a new invitation</span>.
+          This link is missing its reset code.{' '}
+          <LocaleLink to="/forgot-password">Request a new reset link</LocaleLink>.
         </p>
       ) : success ? (
         <p>
-          <a href="/sign-in">Go to sign in</a>
+          <LocaleLink to="/sign-in">Go to sign in</LocaleLink>
         </p>
       ) : (
         <form className="form" onSubmit={onSubmit} noValidate aria-busy={busy}>
           <Field
             id="password"
-            label="Password"
+            label="New password"
             type="password"
             autoComplete="new-password"
             error={fields.password}
@@ -79,7 +80,7 @@ export default function AcceptInvitePage() {
           />
           <Field
             id="confirm_password"
-            label="Confirm password"
+            label="Confirm new password"
             type="password"
             autoComplete="new-password"
             error={fields.confirm_password}

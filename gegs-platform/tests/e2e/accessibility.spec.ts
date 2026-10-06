@@ -31,11 +31,15 @@ test('page exposes one h1 and a main landmark', async ({ page }) => {
   await expect(page.locator('main')).toHaveCount(1);
 });
 
-test('html carries explicit lang and dir', async ({ page }) => {
-  await page.goto('/');
+test('html carries explicit lang and dir per locale', async ({ page }) => {
   // Phase 1 §12: dir is set server-side so there is no flash of wrong direction.
+  await page.goto('/en');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+
+  await page.goto('/ar');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
 });
 
 test('remains usable at 200% zoom with no horizontal scroll', async ({ page }) => {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { LocaleLink } from '../_lib/LocaleLink';
 import { StatusRegion } from '../_lib/StatusRegion';
 import { postAuth, tokenFromUrl } from '../_lib/client';
 
@@ -48,11 +49,11 @@ export default function VerifyEmailPage() {
       {token === null ? null : token === '' ? (
         <p>
           This link is missing its confirmation code. Open the link from your email again, or{' '}
-          <a href="/sign-in">sign in</a> if you have already confirmed.
+          <LocaleLink to="/sign-in">sign in</LocaleLink> if you have already confirmed.
         </p>
       ) : success ? (
         <p>
-          <a href="/sign-in">Go to sign in</a>
+          <LocaleLink to="/sign-in">Go to sign in</LocaleLink>
         </p>
       ) : (
         <>

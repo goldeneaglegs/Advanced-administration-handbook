@@ -1,29 +1,19 @@
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { resolveEntryLocale } from '@/i18n/entry-locale';
+
 /**
- * Milestone 0 landing page.
+ * The locale-less root (Phase 1 §12).
  *
- * This is scaffolding, not a product screen, and it says so rather than
- * presenting a convincing-looking dashboard that does nothing. The application
- * name is DECISION REQUIRED #4 and is deliberately not invented here.
+ * `/` carries no locale, so this is one of the entry points where the stored
+ * preference applies: a signed-in user goes to their `users.locale`, everyone
+ * else to the default. Per the recorded decision this NEVER writes the
+ * preference, and it never overrides an explicit `/en/...` or `/ar/...`.
+ *
+ * A server component rather than a middleware redirect, because reading
+ * `users.locale` means Prisma, which cannot run on the Edge.
  */
-export default function Home() {
-  return (
-    <div className="page">
-      <h1>Operations platform — Milestone 0</h1>
-      <p>
-        Project scaffolding is in place. No product functionality is implemented yet: schema and
-        seed data arrive in Milestone 1, authentication in Milestone 2, and the authorisation policy
-        layer in Milestone 3.
-      </p>
-      <dl>
-        <dt>Service health</dt>
-        <dd>
-          <a href="/api/health">/api/health</a>
-        </dd>
-        <dt>Crawler policy</dt>
-        <dd>Disallowed. This application serves no indexed URL.</dd>
-        <dt>Application name</dt>
-        <dd>Not yet decided</dd>
-      </dl>
-    </div>
-  );
+export default async function LocaleLessRoot() {
+  const locale = await resolveEntryLocale((await headers()).get('cookie') ?? undefined);
+  redirect(`/${locale}`);
 }

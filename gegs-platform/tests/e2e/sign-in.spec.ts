@@ -92,7 +92,9 @@ test('correct credentials sign in and navigate away', async ({ page }) => {
   // Submit with Enter, proving the form works without a pointer.
   await page.getByLabel('Password').press('Enter');
 
-  await expect(page).toHaveURL(/\/$/);
+  // `/` now resolves to a locale (§12), so the post-login landing is /en or
+  // /ar rather than the bare root.
+  await expect(page).toHaveURL(/\/(en|ar)$/);
   // The session cookie is HttpOnly, so its presence is checked via the API.
   const me = await page.request.get('/api/me');
   expect(me.status()).toBe(200);

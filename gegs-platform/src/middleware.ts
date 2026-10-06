@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { LOCALE_HEADER, firstSegment, isLocale } from '@/i18n/locales';
 import { REQUEST_ID_HEADER, resolveRequestId } from '@/lib/request-id';
 import { CSRF_COOKIE, csrfCookieOptions, mintCsrfToken } from '@/lib/auth/csrf';
 
@@ -34,6 +35,25 @@ export function middleware(request: NextRequest): NextResponse {
 
   const forwarded = new Headers(request.headers);
   forwarded.set(REQUEST_ID_HEADER, requestId);
+
+  // Locale for the root layout, taken from the URL and nowhere else (§12).
+  //
+  // The delete is unconditional and comes FIRST, so a client-supplied
+  // `x-gegs-locale` is always discarded rather than trusted — the same ordering
+  // server.ts uses for `x-gegs-client-ip`, where the internal header heads the
+  // strip list for exactly this reason. The header is then set only when the
+  // first path segment is a supported locale, so `/sign-in` carries none and
+  // the layout falls back to the default.
+  //
+  // NO REDIRECT HAPPENS HERE. The stored-preference redirect for a locale-less
+  // entry needs `users.locale`, which means Prisma, which cannot run on the
+  // Edge. It is a server component instead. Keeping this function
+  // single-exit also means the security block below cannot be skipped: Phase 1
+  // §1.2 rule 2 wants `X-Robots-Tag` on EVERY response, and an early return is
+  // how that guarantee gets lost.
+  forwarded.delete(LOCALE_HEADER);
+  const segment = firstSegment(request.nextUrl.pathname);
+  if (isLocale(segment)) forwarded.set(LOCALE_HEADER, segment);
 
   const response = NextResponse.next({ request: { headers: forwarded } });
 
