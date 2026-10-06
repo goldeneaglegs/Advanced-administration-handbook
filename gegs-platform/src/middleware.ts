@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { REQUEST_ID_HEADER, resolveRequestId } from '@/lib/request-id';
+import { CSRF_COOKIE, csrfCookieOptions, mintCsrfToken } from '@/lib/auth/csrf';
 
 /**
  * Security headers and the WordPress boundary, applied to every response.
@@ -50,6 +51,19 @@ export function middleware(request: NextRequest): NextResponse {
   response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
   response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
   response.headers.set(REQUEST_ID_HEADER, requestId);
+
+  // Issue a CSRF token if the visitor has none. It must be minted here rather
+  // than in a page, because a React server component cannot set a cookie. The
+  // cookie is deliberately NOT HttpOnly: the page reads it to echo into the
+  // form, which is the double-submit mechanism. An attacker's page cannot read
+  // it, because it belongs to this origin.
+  if (!request.cookies.has(CSRF_COOKIE)) {
+    response.cookies.set(
+      CSRF_COOKIE,
+      mintCsrfToken(),
+      csrfCookieOptions(request.nextUrl.protocol === 'https:'),
+    );
+  }
 
   // HSTS is only meaningful over TLS, and setting it in local development would
   // pin a developer's browser to https://localhost.

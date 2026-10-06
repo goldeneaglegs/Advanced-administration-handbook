@@ -135,10 +135,15 @@ describeIfDb('Milestone 1 schema', () => {
 
   // -------------------------------------------------------------------------
   describe('tables', () => {
+    // Milestone 1 tables, plus any table added by a LATER approved migration.
+    // Keeping this list exact is deliberate: an unapproved table appearing in
+    // the schema fails the build. `auth_attempts` was added by the approved
+    // Milestone 2 migration 20261006130100_auth_attempts (per-IP throttling).
     const EXPECTED = [
       'application_stage_history',
       'applications',
       'audit_log',
+      'auth_attempts',
       'candidate_profiles',
       'case_stage_history',
       'case_stages',
@@ -162,7 +167,7 @@ describeIfDb('Milestone 1 schema', () => {
       'users',
     ];
 
-    it('creates exactly the approved Phase 1 §2.2 tables', async () => {
+    it('creates exactly the approved tables and no others', async () => {
       const rows = await db.$queryRaw<Array<{ table_name: string }>>`
         SELECT table_name FROM information_schema.tables
         WHERE table_schema = 'public' AND table_type = 'BASE TABLE'

@@ -20,6 +20,9 @@
     "isolatedModules": true,
     "incremental": true,
     "noEmit": true,
+    // server.ts is executed directly by Node 22 (native type stripping), so its
+    // relative imports must keep the .ts extension. Safe because we never emit.
+    "allowImportingTsExtensions": true,
     "plugins": [{ "name": "next" }],
     "paths": { "@/*": ["./src/*"] }
   },

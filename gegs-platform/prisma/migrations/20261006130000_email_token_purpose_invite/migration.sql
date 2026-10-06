@@ -1,0 +1,15 @@
+-- Adds the invite purpose to email_token_purpose.
+--
+-- Staff accounts (consultant, case_officer, manager, admin) can never be
+-- self-registered: they are invited. Phase 1 §3.3 restricts
+-- /api/auth/register to candidates, so the invited path needs its own token
+-- purpose.
+--
+-- This is a migration of its own, deliberately. PostgreSQL permits
+-- `ALTER TYPE ... ADD VALUE` inside a transaction, but the new value cannot be
+-- USED in that same transaction. Keeping it separate means any later migration
+-- or code path can reference 'accept_invite' safely.
+--
+-- Invite ISSUANCE is not in Milestone 2 — that is an admin screen (M8). This
+-- milestone implements consumption only.
+ALTER TYPE email_token_purpose ADD VALUE IF NOT EXISTS 'accept_invite';
