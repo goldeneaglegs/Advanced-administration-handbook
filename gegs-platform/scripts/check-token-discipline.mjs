@@ -44,8 +44,12 @@ const SCANNED_EXTENSIONS = /\.(?:css|scss|ts|tsx|js|jsx|mjs|cjs)$/i;
  * The lookbehind rejects a `#` that follows a word character or another `#`,
  * and the lookahead rejects a longer token, so `#section`, `#!/usr/bin/env`,
  * `#faq` and a 40-character commit SHA are all left alone. An 8-character SHA
- * fragment written as `#deadbeef` is indistinguishable from a colour and will
- * be reported; the allow marker is the answer in that case.
+ * fragment is indistinguishable from a colour and will be reported; the allow
+ * marker is the answer in that case, and the next line is the proof — the
+ * example below is this gate flagging its own documentation.
+ *
+ * token-colour-allow
+ * Example of the limitation: #deadbeef.
  */
 const COLOUR_RE = /(?<![\w#])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![\w-])/;
 
