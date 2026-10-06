@@ -20,9 +20,12 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:generate": "prisma generate",
-    "gate": "npm run lint && npm run format:check && npm run typecheck && npm run contrast:check && npm run test:unit && npm run secret:scan",
+    "gate": "npm run lint && npm run format:check && npm run typecheck && npm run tokens:check && npm run tokens:discipline && npm run contrast:check && npm run test:unit && npm run secret:scan",
     "test": "vitest run",
-    "contrast:check": "node scripts/check-contrast.mjs"
+    "contrast:check": "node scripts/check-contrast.mjs",
+    "tokens:generate": "node scripts/generate-css-tokens.ts",
+    "tokens:check": "node scripts/generate-css-tokens.ts --check",
+    "tokens:discipline": "node scripts/check-token-discipline.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.705.0",

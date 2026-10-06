@@ -1,0 +1,70 @@
+/*
+ * GENERATED FILE — DO NOT EDIT.
+ *
+ * Written by scripts/generate-css-tokens.ts from src/design/tokens.ts,
+ * which is the single source of truth for every design value (Phase 1 §10).
+ * Edit the tokens, then run `npm run tokens:generate`. CI runs
+ * `npm run tokens:check` and fails if this file has drifted.
+ */
+:root {
+  /* Colour (§10.1). Placeholders pending DECISION REQUIRED #14. */
+  --navy-900: #0b1a2f;
+  --navy-700: #152a47;
+  --navy-500: #2a4568;
+  --gold-600: #a67f30;
+  --gold-500: #b8923f;
+  --gold-300: #d9bd7a;
+  --paper-50: #fbfaf8;
+  --paper-200: #ece8e1;
+  --line-500: #8b8172;
+  --ink-700: #3a4452;
+  --success: #1f6b4a;
+  --warning: #8a5a12;
+  --danger: #9b2c2c;
+  --info: #1f4e6b;
+
+  /* Spacing (§10.3): 4px base scale. Nothing off-scale. */
+  --space-4: 0.25rem;
+  --space-8: 0.5rem;
+  --space-12: 0.75rem;
+  --space-16: 1rem;
+  --space-24: 1.5rem;
+  --space-32: 2rem;
+  --space-48: 3rem;
+  --space-64: 4rem;
+
+  /* Type scale (§10.2): 1.25 ratio on a 16px base. */
+  --text-12: 0.75rem;
+  --text-14: 0.875rem;
+  --text-16: 1rem;
+  --text-20: 1.25rem;
+  --text-25: 1.5625rem;
+  --text-31: 1.9375rem;
+  --text-39: 2.4375rem;
+
+  /* Typography (§10.2). Stacks only — no font file is loaded yet. */
+  --font-ui: 'IBM Plex Sans', 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Noto Naskh Arabic', serif;
+  --line-height-body: 1.6;
+  --line-height-display: 1.2;
+  --measure: 70ch;
+
+  /* Radius (§10.3): encodes elevation rather than one global value. */
+  --radius-rule: 0px;
+  --radius-control: 4px;
+  --radius-card: 8px;
+  --radius-overlay: 12px;
+
+  /* Borders and the focus ring (§10.3, §10.4). */
+  --border-hairline: 1px;
+  --border-emphasis: 2px;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* One shadow, used twice (§10.3): modals and dropdowns only, never cards. */
+  /* Geometry UNDECIDED — no custom property until it is approved. */
+
+  /* Motion (§10.3): state transitions only. Removed under reduced motion. */
+  --motion-local: 120ms;
+  --motion-layout: 200ms;
+}

@@ -9,3 +9,8 @@ prisma/migrations
 # sign-off. Reformatting them would alter approved content.
 docs/00-PRODUCT-DEFINITION.md
 docs/01-ARCHITECTURE-AND-UX-PLAN.md
+
+# Generated from src/design/tokens.ts by scripts/generate-css-tokens.ts. It is
+# machine-written and verified by `npm run tokens:check`; letting Prettier
+# rewrite it would put the formatter and that gate in permanent conflict.
+src/design/tokens.generated.css

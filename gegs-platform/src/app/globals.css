@@ -1,20 +1,17 @@
 /*
- * Milestone 0 baseline only. The design system (tokens, components, all eight
- * component states) arrives in Milestone 4 per Phase 1 §16.
+ * Base stylesheet.
  *
- * Token values mirror src/design/tokens.ts, which is the single source of truth
- * and is contrast-gated in CI.
+ * Milestone 4 batch 1 removed the hand-copied token block that used to sit
+ * here. Every design value now arrives from src/design/tokens.ts by way of the
+ * generated stylesheet below, so there is one source of truth rather than two
+ * that can drift — and they had drifted: --paper-200 was referenced here but
+ * never defined, and six colours were written as literals the token file could
+ * not reach.
+ *
+ * Components and their eight states are batches 3 and 4. This file is still the
+ * plain baseline; the only change is where its values come from.
  */
-:root {
-  --navy-900: #0b1a2f;
-  --gold-600: #a67f30;
-  --paper-50: #fbfaf8;
-  --line-500: #8b8172;
-  --ink-700: #3a4452;
-
-  --space-4: 1rem;
-  --space-6: 2rem;
-}
+@import '../design/tokens.generated.css';
 
 *,
 *::before,
@@ -35,29 +32,29 @@ body {
     -apple-system,
     'Segoe UI',
     sans-serif;
-  font-size: 1rem;
-  line-height: 1.6;
+  font-size: var(--text-16);
+  line-height: var(--line-height-body);
 }
 
 /* Phase 1 §10.4: the focus ring is never removed, and uses gold-600 on light
    backgrounds because gold-500 fails the 3:1 non-text minimum. */
 :focus-visible {
-  outline: 2px solid var(--gold-600);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--gold-600);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .skip-link {
   position: absolute;
-  inset-inline-start: var(--space-4);
+  inset-inline-start: var(--space-16);
   inset-block-start: -3rem;
   padding: 0.5rem 1rem;
   background: var(--navy-900);
   color: var(--paper-50);
-  transition: inset-block-start 120ms ease;
+  transition: inset-block-start var(--motion-local) ease;
 }
 
 .skip-link:focus {
-  inset-block-start: var(--space-4);
+  inset-block-start: var(--space-16);
 }
 
 /* Phase 1 §10.3: all motion is removable. */
@@ -75,13 +72,13 @@ body {
   /* Phase 1 §11: 16px side gutter at the 360px floor, content capped at xl. */
   max-width: 44rem;
   margin-inline: auto;
-  padding: var(--space-6) var(--space-4);
+  padding: var(--space-32) var(--space-16);
 }
 
 .page h1 {
-  font-size: 1.5625rem;
-  line-height: 1.2;
-  margin-block: 0 var(--space-4);
+  font-size: var(--text-25);
+  line-height: var(--line-height-display);
+  margin-block: 0 var(--space-16);
 }
 
 .page dl {
@@ -89,9 +86,9 @@ body {
   grid-template-columns: max-content 1fr;
   gap: 0.5rem 1rem;
   margin: 0;
-  padding: var(--space-4);
-  border: 1px solid var(--line-500);
-  border-radius: 8px;
+  padding: var(--space-16);
+  border: var(--border-hairline) solid var(--line-500);
+  border-radius: var(--radius-card);
 }
 
 .page dt {
@@ -120,27 +117,27 @@ body {
 }
 
 .alert {
-  margin-block: 0 var(--space-4);
+  margin-block: 0 var(--space-16);
   padding: 0.75rem 1rem;
-  border-radius: 4px;
-  border: 1px solid var(--line-500);
+  border-radius: var(--radius-control);
+  border: var(--border-hairline) solid var(--line-500);
 }
 
 .alert--error {
-  /* danger token from src/design/tokens.ts — 7.21:1 on paper-50 */
-  color: #9b2c2c;
-  border-color: #9b2c2c;
+  /* danger — 7.21:1 on paper-50 */
+  color: var(--danger);
+  border-color: var(--danger);
 }
 
 .alert--success {
-  /* success token — 6.17:1 on paper-50 */
-  color: #1f6b4a;
-  border-color: #1f6b4a;
+  /* success — 6.17:1 on paper-50 */
+  color: var(--success);
+  border-color: var(--success);
 }
 
 .form {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-16);
 }
 
 .field {
@@ -156,12 +153,16 @@ body {
   /* 16px minimum: anything smaller makes iOS Safari zoom on focus, and a large
      share of candidates will read Arabic on a phone in bright sunlight. */
   font: inherit;
-  font-size: 1rem;
+  font-size: var(--text-16);
   padding: 0.625rem 0.75rem;
   /* line-500, not paper-200: an input boundary must meet the 3:1 non-text
      minimum of WCAG 2.2 SC 1.4.11. */
-  border: 1px solid var(--line-500);
-  border-radius: 4px;
+  border: var(--border-hairline) solid var(--line-500);
+  border-radius: var(--radius-control);
+  /* Pure white has no token in the approved §10.1 palette, and inventing one
+     would pre-empt DECISION REQUIRED #14. Left exactly as Milestone 2 shipped
+     it, and flagged for your decision rather than changed.
+     token-colour-allow */
   background: #fff;
   color: var(--navy-900);
   /* 44px minimum touch target. */
@@ -169,8 +170,9 @@ body {
 }
 
 .field input[aria-invalid='true'] {
-  border-color: #9b2c2c;
-  border-width: 2px;
+  border-color: var(--danger);
+  /* 2 px, so the error reads without relying on colour alone. */
+  border-width: var(--border-emphasis);
 }
 
 .field input:disabled {
@@ -180,7 +182,7 @@ body {
 
 .error-text {
   margin: 0;
-  color: #9b2c2c;
+  color: var(--danger);
 }
 
 .btn {
@@ -188,15 +190,15 @@ body {
   font-weight: 600;
   min-height: 2.75rem;
   padding: 0.625rem 1.25rem;
-  border-radius: 4px;
-  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  border: var(--border-hairline) solid transparent;
   cursor: pointer;
 }
 
 .btn--primary {
   /* gold-500 fill with navy-900 text: 6.00:1. White on gold is 2.79:1 and
      fails, which is why it is not used here (Phase 1 §10.1). */
-  background: #b8923f;
+  background: var(--gold-500);
   color: var(--navy-900);
 }
 
