@@ -354,11 +354,30 @@ describeIfDb('Milestone 1 schema', () => {
       });
     });
 
-    it('refuses UPDATE even when the table is empty (statement-level cover)', async () => {
+    it('refuses a statement that matches NO rows (statement-level cover)', async () => {
+      // The statement-level trigger is what makes these tables append-only from
+      // creation rather than from their first row. `WHERE false` matches
+      // nothing, so no row-level trigger can fire and only the statement-level
+      // one can reject it.
+      //
+      // Phrased this way deliberately: an earlier version asserted the table
+      // was globally empty, which stopped being true once Milestone 2 began
+      // writing audit rows. The property under test never depended on that.
       await inRolledBackTx(async (tx) => {
-        const n = await tx.$queryRaw<Array<{ n: bigint }>>`SELECT count(*) AS n FROM audit_log`;
-        expect(Number(n[0]!.n)).toBe(0);
-        const message = await violationMessage(tx, () => tx.$executeRaw`TRUNCATE audit_log`);
+        const message = await violationMessage(
+          tx,
+          () => tx.$executeRaw`UPDATE audit_log SET action = action WHERE false`,
+        );
+        expect(message).toMatch(/append-only/i);
+      });
+    });
+
+    it('refuses a DELETE that matches no rows', async () => {
+      await inRolledBackTx(async (tx) => {
+        const message = await violationMessage(
+          tx,
+          () => tx.$executeRaw`DELETE FROM document_access_log WHERE false`,
+        );
         expect(message).toMatch(/append-only/i);
       });
     });

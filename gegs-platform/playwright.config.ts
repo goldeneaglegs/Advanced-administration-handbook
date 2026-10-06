@@ -21,20 +21,27 @@ export default defineConfig({
       : {}),
   },
   projects: [
+    // API tests are protocol-level and breakpoint-independent, so they run once
+    // in their own project rather than four times across viewports.
+    { name: 'api', testMatch: /.*\.api\.spec\.ts/ },
     {
       name: 'base-360',
+      testIgnore: /.*\.api\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 360, height: 740 } },
     },
     {
       name: 'md-768',
+      testIgnore: /.*\.api\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 768, height: 1024 } },
     },
     {
       name: 'lg-1024',
+      testIgnore: /.*\.api\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1024, height: 768 } },
     },
     {
       name: 'xl-1440',
+      testIgnore: /.*\.api\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
     },
   ],
